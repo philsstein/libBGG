@@ -40,8 +40,23 @@ class Boardgame(object):
             except AttributeError:
                 pass
 
-    def __str__(self):
+    def __unicode__(self):
         return '%s (%s) by %s' % (self.name, self._year, ', '.join(self._designers))
+
+    def __str__(self):
+        return self.__unicode__().encode('utf-8').strip()
+
+    def dump(self):
+        print '%s:' % self.name
+        for p in sorted(Boardgame.valid_properties):
+            try:
+                attr = getattr(self, '_' + p)
+                if type(attr) == list:
+                    print '\t%s: %s' % (p, u', '.join(attr).encode('utf-8').strip())
+                else:
+                    print '\t%s: %s' % (p, attr.encode('utf-8').strip())
+            except AttributeError:
+                pass
 
     @property
     def name(self):
