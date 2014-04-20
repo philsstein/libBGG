@@ -1,0 +1,5 @@
+*.un~
+TAGS
+tags
+*.swp
+*.pyc
