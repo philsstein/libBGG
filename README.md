@@ -10,6 +10,8 @@ It contains three parts:
 
 Example usage:
 --------------
+
+```python
 api = BGGAPI()
 
 bg = api.fetch_boardgame('yinch')
@@ -18,4 +20,4 @@ print 'Yinch was created in %s by %s' % (bg.year, ', '.join(bg.designers)
 
 guild = api.fetch('1920')  # BGG only supports fetch by ID.
 guild.dump()
-
+```
