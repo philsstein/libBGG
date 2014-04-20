@@ -20,6 +20,10 @@ class Boardgame(object):
     ]
 
     def __init__(self, **kwargs):
+        # set all attributes to None
+        for vp in Boardgame.valid_properties:
+            setattr(self, '_' + vp, '')
+
         # if we're given a valid property, set it otherwise leave it
         # as None
         for key, value in kwargs.iteritems():
@@ -51,10 +55,11 @@ class Boardgame(object):
         for p in sorted(Boardgame.valid_properties):
             try:
                 attr = getattr(self, '_' + p)
-                if type(attr) == list:
-                    print '\t%s: %s' % (p, u', '.join(attr).encode('utf-8').strip())
-                else:
-                    print '\t%s: %s' % (p, attr.encode('utf-8').strip())
+                if len(attr) > 0:
+                    if type(attr) == list:
+                        print '\t%s: %s' % (p, u', '.join(attr).encode('utf-8').strip())
+                    else:
+                        print '\t%s: %s' % (p, attr.encode('utf-8').strip())
             except AttributeError:
                 pass
 

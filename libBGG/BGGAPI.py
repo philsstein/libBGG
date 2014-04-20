@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import logging
 
 from libBGG.Boardgame import Boardgame
+from libBGG.Guild import Guild
 
 log = logging.getLogger(__name__)
 
@@ -14,25 +15,31 @@ class BGGAPI(object):
     def __init__(self):
         self.root_url = 'http://www.boardgamegeek.com/xmlapi2/'
 
-    def fetch_boardgame(self, name):
-        log.info('fetching boardgame %s' % name)
-        url = '%ssearch?query=%s&exact=1' % (self.root_url,
-                                              urllib2.quote(name))
-        tree = ET.parse(urllib2.urlopen(url))
-        game = tree.find("./*[@type='boardgame']")
-        if game is None:
-            log.warn('game not found: %s' % name)
-            return None
+    def _get_tree_by_id(self, bgg_id):
+        url = '%sthing?id=%s' % (self.root_url, bgg_id)
+        return ET.parse(urllib2.urlopen(url))
 
-        bgid = game.attrib['id'] if 'id' in game.attrib else None
-        if not bgid:
-            log.warning('BGGAPI gave us a game without an id: %s' % name)
-            return None
+    def fetch_boardgame(self, name, bgid=None):
+        '''Fetch information about a bardgame from BGG by name. If bgid is given,
+        it will be used instead. bgid is the ID of the game at BGG. bgid should be type str.'''
+        if bgid is None:
+            log.info('fetching boardgame by name "%s"' % name)
+            url = '%ssearch?query=%s&exact=1' % (self.root_url,
+                                                  urllib2.quote(name))
+            tree = ET.parse(urllib2.urlopen(url))
+            game = tree.find("./*[@type='boardgame']")
+            if game is None:
+                log.warn('game not found: %s' % name)
+                return None
 
-        url = '%sthing?id=%s' % (self.root_url, bgid)
-        tree = ET.parse(urllib2.urlopen(url))
+            bgid = game.attrib['id'] if 'id' in game.attrib else None
+            if not bgid:
+                log.warning('BGGAPI gave us a game without an id: %s' % name)
+                return None
+
+        log.info('fetching boardgame by BGG ID "%s"' % bgid)
+        tree = self._get_tree_by_id(bgid)
         root = tree.getroot()
-        game = tree.find("./*[@id='%s']" % bgid)
 
         kwargs = dict()
         kwargs['bgid'] = bgid
@@ -81,16 +88,37 @@ class BGGAPI(object):
         log.debug('creating boardgame with kwargs: %s' % kwargs)
         return Boardgame(**kwargs)
 
-if __name__ == '__main__':
-    # test.
-    from sys import exit, argv
-    logging.basicConfig(level=logging.DEBUG)
-    api = BGGAPI()
-    name = 'yinsh' if len(argv) <= 1 else argv[1]
-    bg = api.fetch_boardgame(name)
-    if bg is None:
-        log.critical('%s: not found' % name)
-        exit(1)
+    def fetch_guild(self, gid):
+        '''Fetch Guild information from BGG and populate a returned Guild object. There is
+        currently no way to query BGG by guild name, it must be by ID.'''
+        url = '%sguild?id=%s&members=1' % (self.root_url, gid)
+        tree = ET.parse(urllib2.urlopen(url))
+        root = tree.getroot()
 
-    print bg
-    exit(0)
+        kwargs = dict()
+        kwargs['name'] = root.attrib['name']
+        kwargs['bggid'] = gid
+        kwargs['members'] = list()
+
+        el = root.find('.//members[@count]')
+        count = int(el.attrib['count'])
+        total_pages = 1+(count/25)   # 25 memebers per page according to BGGAPI
+        if total_pages >= 10:
+            log.warn('Need to fetch %d pages. It could take awhile.' % total_pages)
+        for page in xrange(total_pages):
+            url = '%sguild?id=%s&members=1&page=%d' % (self.root_url, gid, page+1)
+            tree = ET.parse(urllib2.urlopen(url))
+            root = tree.getroot()
+            log.debug('fetched guild page %d of %d' % (page, total_pages))
+
+            for el in root.findall('.//member'):
+                kwargs['members'].append(el.attrib['name'])
+
+            if page == 1:
+                # grab initial info from first page
+                for tag in ['description', 'category', 'website', 'manager']:
+                    el = root.find(tag)
+                    if not el is None:
+                        kwargs[tag] = el.text
+       
+        return Guild(**kwargs)
