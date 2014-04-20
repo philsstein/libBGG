@@ -16,7 +16,7 @@ api = BGGAPI()
 
 bg = api.fetch_boardgame('yinch')
 bg.dump()
-print 'Yinch was created in %s by %s' % (bg.year, ', '.join(bg.designers)
+print 'Yinch was created in %s by %s' % (bg.year, ', '.join(bg.designers))
 
 guild = api.fetch('1920')  # BGG only supports fetch by ID.
 guild.dump()
