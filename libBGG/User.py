@@ -43,4 +43,4 @@ class User(PropertiedObject):
 
     @property
     def fullname(self):
-        return ' '.join([self.firstname, self.lastname]).encode('utf-8').strip() 
+        return ' '.join([self.firstname, self.lastname]).encode('utf-8').strip()

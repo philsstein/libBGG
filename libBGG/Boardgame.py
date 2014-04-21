@@ -19,7 +19,7 @@ class Boardgame(PropertiedObject):
     valid_properties = [
         'designers', 'artists', 'playingtime', 'thumbnail',
         'image', 'description', 'minplayers', 'maxplayers',
-        'categories', 'mechanics', 'families', 'publishers', 
+        'categories', 'mechanics', 'families', 'publishers',
         'website', 'year', 'names', 'bgid'
     ]
 

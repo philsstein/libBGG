@@ -11,8 +11,21 @@ from libBGG.User import User
 
 log = logging.getLogger(__name__)
 
-class BGGAPI(object):
 
+class BGGAPI(object):
+    '''
+    BGGAPI is a class that knows how to contact BGG for information, parse out relevant details,
+    the create a Python BGG object for general use.
+
+    Example:
+        api = BGGAPI()
+
+        bg = api.fetch_boardgame('yinsh')
+        print 'Yinsh was created in %s by %s' % (bg.year, ', '.join(bg.designers))
+
+        guild = api.fetch('1920')  # BGG only supports fetch by ID.
+        print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
+    '''
     def __init__(self):
         self.root_url = 'http://www.boardgamegeek.com/xmlapi2/'
 
@@ -26,7 +39,7 @@ class BGGAPI(object):
         if bgid is None:
             log.info('fetching boardgame by name "%s"' % name)
             url = '%ssearch?query=%s&exact=1' % (self.root_url,
-                                                  urllib2.quote(name))
+                                                 urllib2.quote(name))
             tree = ET.parse(urllib2.urlopen(url))
             game = tree.find("./*[@type='boardgame']")
             if game is None:
@@ -44,7 +57,7 @@ class BGGAPI(object):
 
         kwargs = dict()
         kwargs['bgid'] = bgid
-        # entries that use attrib['value']. 
+        # entries that use attrib['value'].
         value_map = {
             './/yearpublished': 'year',
             './/minplayers': 'minplayers',
@@ -121,7 +134,7 @@ class BGGAPI(object):
                     el = root.find(tag)
                     if not el is None:
                         kwargs[tag] = el.text
-       
+
         return Guild(**kwargs)
 
     def fetch_user(self, name):

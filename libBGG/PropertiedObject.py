@@ -13,7 +13,7 @@ class PropertiedObject(object):
     def __init__(self, **kwargs):
         try:
             props = getattr(self, 'valid_properties')
-        except AttributeError as e:
+        except AttributeError:
             raise PropertiedObjectException('valid_properties not defined.')
 
         # set all attributes to None
@@ -24,7 +24,7 @@ class PropertiedObject(object):
         # as None
         for key, value in kwargs.iteritems():
             if key in props:
-                setattr(self, key, value)    
+                setattr(self, key, value)
             else:
                 err = 'bad arg given to a PropertiedObject: %s=%s' % (
                     str(key), str(value))
@@ -35,7 +35,7 @@ class PropertiedObject(object):
         print '%s:' % label
         try:
             props = getattr(self, 'valid_properties')
-        except AttributeError as e:
+        except AttributeError:
             raise PropertiedObjectException('valid_properties not defined.')
 
         for p in sorted(props):

@@ -3,6 +3,7 @@ from libBGG.PropertiedObject import PropertiedObject
 
 log = logging.getLogger(__name__)
 
+
 class GuildException(Exception):
     '''Exception wrapper for Guild specific exceptions.'''
     pass
