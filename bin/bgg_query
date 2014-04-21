@@ -19,7 +19,8 @@ if __name__ == '__main__':
     ap.add_argument('-u', '--user', dest='user', action='append', help='Name of BGG user.')
     ap.add_argument("-l", "--loglevel", dest="loglevel",
                     help="The level at which to log. Must be one of "
-                    "none, debug, info, warning, error, or critical. Default is info.",
+                    "none, debug, info, warning, error, or critical. Default is none. ("
+                    "This is mostly used for debugging.)",
                     default='none', choices=['none', 'all', 'debug', 'info', 'warning',
                                              'error', 'critical'])
     args = ap.parse_args()
