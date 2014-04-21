@@ -26,7 +26,7 @@ if __name__ == '__main__':
     args = ap.parse_args()
 
     if args.game is None and args.guild is None and args.user is None:
-        print ap.print_help()
+        ap.print_help()
         exit(1)
 
     logLevels = {
@@ -58,5 +58,3 @@ if __name__ == '__main__':
                     continue
 
                 item.dump()
-
-        
