@@ -7,6 +7,7 @@ import logging
 
 from libBGG.Boardgame import Boardgame
 from libBGG.Guild import Guild
+from libBGG.User import User
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class BGGAPI(object):
     def __init__(self):
         self.root_url = 'http://www.boardgamegeek.com/xmlapi2/'
 
-    def _get_tree_by_id(self, bgg_id):
+    def _get_thing_by_id(self, bgg_id):
         url = '%sthing?id=%s' % (self.root_url, bgg_id)
         return ET.parse(urllib2.urlopen(url))
 
@@ -38,7 +39,7 @@ class BGGAPI(object):
                 return None
 
         log.info('fetching boardgame by BGG ID "%s"' % bgid)
-        tree = self._get_tree_by_id(bgid)
+        tree = self._get_thing_by_id(bgid)
         root = tree.getroot()
 
         kwargs = dict()
@@ -122,3 +123,44 @@ class BGGAPI(object):
                         kwargs[tag] = el.text
        
         return Guild(**kwargs)
+
+    def fetch_user(self, name):
+        url = '%suser?name=%s&hot=1&top=1' % (self.root_url, name)
+        tree = ET.parse(urllib2.urlopen(url))
+        root = tree.getroot()
+
+        kwargs = dict()
+        kwargs['name'] = root.attrib['name']
+        kwargs['bggid'] = root.attrib['id']
+
+        value_map = {
+            './/firstname': 'firstname',
+            './/lastname': 'lastname',
+            './/yearregistered': 'yearregistered',
+            './/stateorprovince': 'stateorprovince',
+            './/country': 'country',
+            './/traderating': 'traderating',
+        }
+        # cut and pasted from fetch_boardgame. TODO put this in separate function.
+        for xpath, bg_arg in value_map.iteritems():
+            els = root.findall(xpath)
+            for el in els:
+                if 'value' in el.attrib:
+                    if bg_arg in kwargs:
+                        # multiple entries, make this arg a list.
+                        if type(kwargs[bg_arg]) != list:
+                            kwargs[bg_arg] = [kwargs[bg_arg]]
+                        kwargs[bg_arg].append(el.attrib['value'])
+                    else:
+                        kwargs[bg_arg] = el.attrib['value']
+                else:
+                    log.warn('no "value" found in %s for user %s' % (xpath, name))
+
+        for xpath, prop in {'.//top/item': 'top10', './/hot/item': 'hot10'}.iteritems():
+            els = root.findall(xpath)   # do we need to sort these by attrib='rank'? If so, how?
+            for el in els:
+                if not prop in kwargs:
+                    kwargs[prop] = list()
+                kwargs[prop].append(el.attrib['name'])
+
+        return User(**kwargs)
