@@ -22,7 +22,6 @@ print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
 ```
 
 ```
-[glawler@glory:~/src/libBGG]$ ./bin/bgg_query 
 usage: bgg_query [-h] [-g GAME] [-G GUILD] [-u USER]
                  [-l {none,all,debug,info,warning,error,critical}]
 
@@ -38,8 +37,8 @@ optional arguments:
   -u USER, --user USER  Name of BGG user.
   -l {none,all,debug,info,warning,error,critical}, --loglevel {none,all,debug,info,warning,error,critical}
                         The level at which to log. Must be one of none, debug,
-                        info, warning, error, or critical. Default is info.
-glawler@Willow:~/src/libBGG>
+                        info, warning, error, or critical. Default is none.
+                        (This is mostly used for debugging.)
 ```
 
 ```
