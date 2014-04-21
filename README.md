@@ -22,7 +22,11 @@ print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
 ```
 
 ```
-glawler@Willow:~/src/libBGG> ./bin/bgg_query.py -g yinsh
+glawler@Willow:~/src/libBGG> ./bin/bgg_query.py --game yinsh --guild 1291
+Guild r/boardgames:
+    bggid: 1291
+    members: caitlinsquared, DistinctlyBenign, jdclewis, magdalencox, Schnubby, zetaceti
+    name: r/boardgames
 YINSH:
     artists: lu'cifer
     bgid: 7854
@@ -36,4 +40,5 @@ YINSH:
     playingtime: 30
     publishers: Don & Co., Rio Grande Games, Smart Toys and Games, Inc.
     year: 2003
+glawler@Willow:~/src/libBGG>
 ```
