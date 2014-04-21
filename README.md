@@ -22,6 +22,27 @@ print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
 ```
 
 ```
+[glawler@glory:~/src/libBGG]$ ./bin/bgg_query 
+usage: bgg_query [-h] [-g GAME] [-G GUILD] [-u USER]
+                 [-l {none,all,debug,info,warning,error,critical}]
+
+Query BGG for boardgames and related information. All arguments may be given
+and given multiple times.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -g GAME, --game GAME  Name of game.
+  -G GUILD, --guild GUILD
+                        ID of guild. (bgg does not support guild by name
+                        search.
+  -u USER, --user USER  Name of BGG user.
+  -l {none,all,debug,info,warning,error,critical}, --loglevel {none,all,debug,info,warning,error,critical}
+                        The level at which to log. Must be one of none, debug,
+                        info, warning, error, or critical. Default is info.
+glawler@Willow:~/src/libBGG>
+```
+
+```
 glawler@Willow:~/src/libBGG> ./bin/bgg_query.py --game yinsh --guild 1291
 Guild r/boardgames:
     bggid: 1291
