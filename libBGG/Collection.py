@@ -57,12 +57,12 @@ class Collection(object):
 
     def dump(self):
         # note the , at the end of the print statements (no new lines)
-        print '%s\'s collection has %s games:' % (self.user, len(self.games)),
+        print('%s\'s collection has %s games:' % (self.user, len(self.games)), end=' ')
         for game in self.games:
             name = game.name
-            print '%s (%s) rated: %s,' % (name, game.year, self.rating[name].userrating),
+            print('%s (%s) rated: %s,' % (name, game.year, self.rating[name].userrating), end=' ')
 
-        print
+        print()
 
 
     @property

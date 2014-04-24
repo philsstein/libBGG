@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Note: python 2.7
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError as ETParseError
 
@@ -34,7 +34,7 @@ class BGGAPI(object):
 
     def _get_thing_by_id(self, bgg_id):
         url = '%sthing?id=%s' % (self.root_url, bgg_id)
-        return ET.parse(urllib2.urlopen(url))
+        return ET.parse(urllib.request.urlopen(url))
 
     def fetch_boardgame(self, name, bgid=None):
         '''Fetch information about a bardgame from BGG by name. If bgid is given,
@@ -42,8 +42,8 @@ class BGGAPI(object):
         if bgid is None:
             log.info('fetching boardgame by name "%s"' % name)
             url = '%ssearch?query=%s&exact=1' % (self.root_url,
-                                                 urllib2.quote(name))
-            tree = ET.parse(urllib2.urlopen(url))
+                                                 urllib.parse.quote(name))
+            tree = ET.parse(urllib.request.urlopen(url))
             game = tree.find("./*[@type='boardgame']")
             if game is None:
                 log.warn('game not found: %s' % name)
@@ -75,7 +75,7 @@ class BGGAPI(object):
             ".//link[@type='boardgamepublisher']": 'publishers',
             ".//link[@type='boardgamecategory']": 'categories',
         }
-        for xpath, bg_arg in value_map.iteritems():
+        for xpath, bg_arg in value_map.items():
             els = root.findall(xpath)
             for el in els:
                 if 'value' in el.attrib:
@@ -95,7 +95,7 @@ class BGGAPI(object):
             './image': 'image',
             './description': 'description'
         }
-        for xpath, bg_arg in value_map.iteritems():
+        for xpath, bg_arg in value_map.items():
             els = root.findall(xpath)
             if els:
                 if len(els) > 0:
@@ -109,7 +109,7 @@ class BGGAPI(object):
         '''Fetch Guild information from BGG and populate a returned Guild object. There is
         currently no way to query BGG by guild name, it must be by ID.'''
         url = '%sguild?id=%s&members=1' % (self.root_url, gid)
-        tree = ET.parse(urllib2.urlopen(url))
+        tree = ET.parse(urllib.request.urlopen(url))
         root = tree.getroot()
 
         kwargs = dict()
@@ -122,9 +122,9 @@ class BGGAPI(object):
         total_pages = 1+(count/25)   # 25 memebers per page according to BGGAPI
         if total_pages >= 10:
             log.warn('Need to fetch %d pages. It could take awhile.' % total_pages)
-        for page in xrange(total_pages):
+        for page in range(total_pages):
             url = '%sguild?id=%s&members=1&page=%d' % (self.root_url, gid, page+1)
-            tree = ET.parse(urllib2.urlopen(url))
+            tree = ET.parse(urllib.request.urlopen(url))
             root = tree.getroot()
             log.debug('fetched guild page %d of %d' % (page, total_pages))
 
@@ -143,7 +143,7 @@ class BGGAPI(object):
     def fetch_user(self, name):
         url = '%suser?name=%s&hot=1&top=1' % (self.root_url, name)
         try:
-            tree = ET.parse(urllib2.urlopen(url))
+            tree = ET.parse(urllib.request.urlopen(url))
         except ETParseError:
             log.critical('unable to retrieve BGG user %s' % name)
             return None
@@ -163,7 +163,7 @@ class BGGAPI(object):
             './/traderating': 'traderating',
         }
         # cut and pasted from fetch_boardgame. TODO put this in separate function.
-        for xpath, bg_arg in value_map.iteritems():
+        for xpath, bg_arg in value_map.items():
             els = root.findall(xpath)
             for el in els:
                 if 'value' in el.attrib:
@@ -177,7 +177,7 @@ class BGGAPI(object):
                 else:
                     log.warn('no "value" found in %s for user %s' % (xpath, name))
 
-        for xpath, prop in {'.//top/item': 'top10', './/hot/item': 'hot10'}.iteritems():
+        for xpath, prop in {'.//top/item': 'top10', './/hot/item': 'hot10'}.items():
             els = root.findall(xpath)   # do we need to sort these by attrib='rank'? If so, how?
             for el in els:
                 if not prop in kwargs:
@@ -189,7 +189,7 @@ class BGGAPI(object):
     def fetch_collection(self, user):
         url = '%scollection?username=%s&stats=1' % (self.root_url, user)
         try:
-            tree = ET.parse(urllib2.urlopen(url))
+            tree = ET.parse(urllib.request.urlopen(url))
         except ETParseError:
             log.critical('unable to retrieve BGG collection for user %s' % user)
             return None

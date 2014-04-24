@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import logging
@@ -52,12 +52,12 @@ if __name__ == '__main__':
         bgg.fetch_user: args.user,
         bgg.fetch_collection: args.collection,
     }
-    for func, queries in query_map.iteritems():
+    for func, queries in query_map.items():
         if queries:
             for query in queries:
                 item = func(query)
                 if item is None:
-                    print '%s: not found.' % query
+                    print('%s: not found.' % query)
                     continue
 
                 item.dump()

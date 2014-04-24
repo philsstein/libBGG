@@ -22,7 +22,7 @@ class PropertiedObject(object):
 
         # if we're given a valid property, set it otherwise leave it
         # as None
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             if key in props:
                 setattr(self, key, value)
             else:
@@ -32,7 +32,7 @@ class PropertiedObject(object):
                 raise PropertiedObjectException(err)
 
     def dump(self, label):
-        print '%s:' % label
+        print('%s:' % label)
         try:
             props = getattr(self, 'valid_properties')
         except AttributeError:
@@ -42,9 +42,9 @@ class PropertiedObject(object):
             try:
                 attr = getattr(self, p)
                 if len(attr) > 0:
-                    if type(attr) == list:
-                        print '\t%s: %s' % (p, u', '.join(attr).encode('utf-8').strip())
+                    if isinstance(attr, list):
+                        print('\t%s: %s' % (p, ', '.join(attr).encode('utf-8').strip()))
                     else:
-                        print '\t%s: %s' % (p, attr.encode('utf-8').strip())
+                        print('\t%s: %s' % (p, attr.encode('utf-8').strip()))
             except AttributeError:
                 pass
