@@ -12,16 +12,20 @@ Example usage:
 --------------
 
 ```python
-api = BGGAPI()
+> from libBGG.BGGAPI import BGGAPI
+> api = BGGAPI()
 
-bg = api.fetch_boardgame('yinsh')
-print 'Yinsh was created in %s by %s' % (bg.year, ', '.join(bg.designers))
+> bg = api.fetch_boardgame('YINSH')
+> print 'Yinsh was created in %s by %s' % (bg.year, ', '.join(bg.designers))
+Yinsh was created in 2003 by Kris Burm
 
-guild = api.fetch('1920')  # BGG only supports fetch by ID.
-print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
+> guild = api.fetch_guild('1920')  # BGG only supports guild fetch by ID.
+> print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
+BGG Guild "Paradox" has 2 members.
 
-collection = api.fetch_collection('philsstein')
-print 'philsstein rated yinsh: %s of of 10' % collection.rating['yinsh']
+> collection = api.fetch_collection('philsstein')
+> print 'philsstein rated yinsh: %s out of 10' % collection.rating['YINSH'].userrating
+philsstein rated yinsh: 8 out of 10
 ```
 
 ```
