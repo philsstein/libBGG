@@ -19,6 +19,9 @@ print 'Yinsh was created in %s by %s' % (bg.year, ', '.join(bg.designers))
 
 guild = api.fetch('1920')  # BGG only supports fetch by ID.
 print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
+
+collection = api.fetch_collection('philsstein')
+print 'philsstein rated yinsh: %s of of 10' % collection.rating['yinsh']
 ```
 
 ```
@@ -61,4 +64,34 @@ YINSH:
     publishers: Don & Co., Rio Grande Games, Smart Toys and Games, Inc.
     year: 2003
 glawler@Willow:~/src/libBGG>
+```
+
+Now, with collections. (Yes, there is a BGG user named "yinsh". 
+
+```
+glawler@glory:~/src/libBGG]$ ./bin/bgg_query --user yinsh --collection yinsh --game yinsh
+yinsh's collection has 2 games: Monopoly: Deluxe Edition (1995) rated: 5, Scrabble (1948) rated: 6,
+yinsh:
+    bggid: 83873
+    country: Malaysia
+    firstname: Yin
+    hot10: 
+    lastname: Swee Heng
+    name: yinsh
+    top10: 
+    traderating: 0
+    yearregistered: 2006
+YINSH:
+    artists: lu'cifer
+    bgid: 7854
+    categories: Abstract Strategy
+    designers: Kris Burm
+    families: Mensa Select, Project GIPF
+    maxplayers: 2
+    mechanics: Grid Movement, Pattern Building
+    minplayers: 2
+    names: YINSH
+    playingtime: 30
+    publishers: Don & Co., Rio Grande Games, Smart Toys and Games, Inc.
+    year: 2003
 ```
