@@ -3,10 +3,12 @@ libBGG
 
 A python interface to boardgamegeek.com. Pulls information from BGG and creates appropriate python objects for the data.
 
-It contains three parts:
+Supports Python 3
+
+It contains ~~three~~two parts:
  * BGGAPI - for retriving information from BGG and parsing it into python objects
  * the boardgame objects: Boardgame, Guild, etc.
- * A caching API for writing local boardgame objects to a local sqlite3 DB.
+ * ~~A caching API for writing local boardgame objects to a local sqlite3 DB.~~
 
 Example usage:
 --------------
