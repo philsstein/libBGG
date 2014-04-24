@@ -17,6 +17,8 @@ if __name__ == '__main__':
     ap.add_argument('-G', '--guild', dest='guild', action='append',
                     help='ID of guild. (bgg does not support guild by name search.')
     ap.add_argument('-u', '--user', dest='user', action='append', help='Name of BGG user.')
+    ap.add_argument('-c', '--collection', dest='collection', action='append', help='User\'s'
+                    ' collection')
     ap.add_argument("-l", "--loglevel", dest="loglevel",
                     help="The level at which to log. Must be one of "
                     "none, debug, info, warning, error, or critical. Default is none. ("
@@ -25,7 +27,7 @@ if __name__ == '__main__':
                                              'error', 'critical'])
     args = ap.parse_args()
 
-    if args.game is None and args.guild is None and args.user is None:
+    if args.game is None and args.guild is None and args.user is None and args.collection is None:
         ap.print_help()
         exit(1)
 
@@ -48,6 +50,7 @@ if __name__ == '__main__':
         bgg.fetch_boardgame: args.game,
         bgg.fetch_guild: args.guild,
         bgg.fetch_user: args.user,
+        bgg.fetch_collection: args.collection,
     }
     for func, queries in query_map.iteritems():
         if queries:

@@ -11,8 +11,8 @@ class CollectionException(Exception):
 
 
 class Rating(PropertiedObject):
-    valid_properties = ['name', 'userrating', 'numrated', 'average', 'stddev', 'bayesaverage', 'BGGrank']
-    def __init__(self, *kwargs):
+    valid_properties = ['name', 'userrating', 'usersrated', 'average', 'stddev', 'bayesaverage', 'BGGrank', 'median']
+    def __init__(self, **kwargs):
         self.valid_properties = Rating.valid_properties
         super(Rating, self).__init__(**kwargs)
 
@@ -54,3 +54,17 @@ class Collection(object):
 
     def __str__(self):
         return self.__unicode__().encode('utf-8').strip()
+
+    def dump(self):
+        # note the , at the end of the print statements (no new lines)
+        print '%s\'s collection has %s games:' % (self.user, len(self.games)),
+        for game in self.games:
+            name = game.name
+            print '%s (%s) rated: %s,' % (name, game.year, self.rating[name].userrating),
+
+        print
+
+
+    @property
+    def len(self):
+        return len(self.games)

@@ -3,11 +3,14 @@
 # Note: python 2.7
 import urllib2
 import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ParseError as ETParseError
+
 import logging
 
 from libBGG.Boardgame import Boardgame
 from libBGG.Guild import Guild
 from libBGG.User import User
+from libBGG.Collection import Collection, Rating, BoardgameStatus
 
 log = logging.getLogger(__name__)
 
@@ -139,7 +142,12 @@ class BGGAPI(object):
 
     def fetch_user(self, name):
         url = '%suser?name=%s&hot=1&top=1' % (self.root_url, name)
-        tree = ET.parse(urllib2.urlopen(url))
+        try:
+            tree = ET.parse(urllib2.urlopen(url))
+        except ETParseError:
+            log.critical('unable to retrieve BGG user %s' % name)
+            return None
+
         root = tree.getroot()
 
         kwargs = dict()
@@ -177,3 +185,65 @@ class BGGAPI(object):
                 kwargs[prop].append(el.attrib['name'])
 
         return User(**kwargs)
+
+    def fetch_collection(self, user):
+        url = '%scollection?username=%s&stats=1' % (self.root_url, user)
+        try:
+            tree = ET.parse(urllib2.urlopen(url))
+        except ETParseError:
+            log.critical('unable to retrieve BGG collection for user %s' % user)
+            return None
+
+        root = tree.getroot()
+        collection = Collection(user)
+
+        # build up the games, status, and rating and add to collection.
+        els = root.findall('.//item[@subtype="boardgame"]')
+        log.debug('Found %s games in %s\'s collection.' % (len(els), user))
+        for el in els:
+            stats = el.find('stats')
+            rating = stats.find('rating')
+            status = el.find('status')
+
+            kwargs = dict()
+            bgname = el.find('name').text
+            kwargs['names'] = bgname
+            subel = el.find('yearpublished')
+            kwargs['year'] = subel.text if not subel is None else None
+            subel = el.find('image')
+            kwargs['image'] = subel.text if not subel is None else None
+            subel = el.find('thumbnail')
+            kwargs['thumbnail'] = subel.text if not subel is None else None
+
+            for attr in ['minplayers', 'maxplayers', 'playingtime']:
+                kwargs[attr] = stats.attrib[attr] if attr in stats.attrib else ''
+            collection.games.append(Boardgame(**kwargs))
+           
+            kwargs = dict()
+            # this only works as BoardgameStatus.valid_properties matches most of the XML attributes
+            # exactly. i.e. this is probably bad idea.
+            for prop in BoardgameStatus.valid_properties:
+                kwargs[prop] = status.attrib[prop] if prop in status.attrib else ''
+            kwargs['numplays'] = el.find('numplays').text
+            kwargs['name'] = bgname
+            collection.status[bgname] = BoardgameStatus(**kwargs)
+
+            kwargs = dict()
+            kwargs['name'] = bgname
+            if 'value' in rating.attrib and rating.attrib['value'] != 'N/A':
+                kwargs['userrating'] = rating.attrib['value']
+            else:
+                kwargs['userrating'] = None
+
+            for prop in Rating.valid_properties:
+                rate_el = rating.find(prop)
+                if not rate_el is None:
+                    kwargs[prop] = rate_el.attrib['value'] if 'value' in rate_el.attrib else ''
+
+            kwargs['BGGrank'] = rating.find('ranks/rank[@name="boardgame"]').attrib['value']
+            log.debug('%s ranked %s by BGG - rated %s by %s' % (
+                bgname, kwargs['BGGrank'], kwargs['userrating'], user))
+            log.debug('Creating Rating with: %s' % kwargs)
+            collection.rating[bgname] = Rating(**kwargs)
+
+        return collection
