@@ -5,10 +5,10 @@ A python interface to boardgamegeek.com. Pulls information from BGG and creates 
 
 Supports Python 3
 
-It contains ~~three~~ two parts:
+It contains three two parts:
  * BGGAPI - for retriving information from BGG and parsing it into python objects
  * the boardgame objects: Boardgame, Guild, etc.
- * ~~A caching API for writing local boardgame objects to a local sqlite3 DB.~~
+ * A caching API for writing local boardgame objects to a filesystem.
 
 Example usage:
 --------------
@@ -101,3 +101,8 @@ YINSH:
     publishers: Don & Co., Rio Grande Games, Smart Toys and Games, Inc.
     year: 2003
 ```
+
+Version history
+---------------
+0.1.1 - data caching added
+0.1.0 - inital checkin
