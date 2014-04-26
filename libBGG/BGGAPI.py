@@ -2,6 +2,7 @@
 
 # Note: python 2.7
 import urllib.request, urllib.error, urllib.parse
+from urllib.error import  URLError
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError as ETParseError
 
@@ -13,6 +14,10 @@ from libBGG.User import User
 from libBGG.Collection import Collection, Rating, BoardgameStatus
 
 log = logging.getLogger(__name__)
+
+
+class BGGAPIException(Exception):
+    pass
 
 
 class BGGAPI(object):
@@ -34,7 +39,23 @@ class BGGAPI(object):
 
     def _get_thing_by_id(self, bgg_id):
         url = '%sthing?id=%s' % (self.root_url, bgg_id)
-        return ET.parse(urllib.request.urlopen(url))
+        return self._fetch_tree(url)
+
+    def _fetch_tree(self, url):
+        try:
+            tree = ET.parse(urllib.request.urlopen(url))
+        except URLError as e:
+            log.warn('error getting URL: %s' % url)
+            if hasattr(e, 'reason'):
+                log.warn('We failed to reach a server. Reason: %s' % e.reason)
+            elif hasattr(e, 'code'):
+                log.warn('The server couldn\'t fulfill the request. Error code: %d', e.code)
+            raise BGGAPIException(e)
+        except ETParseError:
+            log.critical('unable to parse BGG response %s' % name)
+            raise BGGAPIException(e)
+
+        return tree
 
     def fetch_boardgame(self, name, bgid=None):
         '''Fetch information about a bardgame from BGG by name. If bgid is given,
@@ -43,7 +64,7 @@ class BGGAPI(object):
             log.info('fetching boardgame by name "%s"' % name)
             url = '%ssearch?query=%s&exact=1' % (self.root_url,
                                                  urllib.parse.quote(name))
-            tree = ET.parse(urllib.request.urlopen(url))
+            tree = self._fetch_tree(url)
             game = tree.find("./*[@type='boardgame']")
             if game is None:
                 log.warn('game not found: %s' % name)
@@ -109,8 +130,12 @@ class BGGAPI(object):
         '''Fetch Guild information from BGG and populate a returned Guild object. There is
         currently no way to query BGG by guild name, it must be by ID.'''
         url = '%sguild?id=%s&members=1' % (self.root_url, gid)
-        tree = ET.parse(urllib.request.urlopen(url))
+        tree = self._fetch_tree(url)
         root = tree.getroot()
+
+        if 'name' not in root.attrib:
+            log.warn('Guild %s not yet approved. Unable to get info on it.' % gid)
+            return None
 
         kwargs = dict()
         kwargs['name'] = root.attrib['name']
@@ -119,12 +144,12 @@ class BGGAPI(object):
 
         el = root.find('.//members[@count]')
         count = int(el.attrib['count'])
-        total_pages = 1+(count/25)   # 25 memebers per page according to BGGAPI
+        total_pages = int(1+(count/25))   # 25 memebers per page according to BGGAPI
         if total_pages >= 10:
             log.warn('Need to fetch %d pages. It could take awhile.' % total_pages)
         for page in range(total_pages):
             url = '%sguild?id=%s&members=1&page=%d' % (self.root_url, gid, page+1)
-            tree = ET.parse(urllib.request.urlopen(url))
+            tree = self._fetch_tree(url)
             root = tree.getroot()
             log.debug('fetched guild page %d of %d' % (page, total_pages))
 
@@ -141,13 +166,8 @@ class BGGAPI(object):
         return Guild(**kwargs)
 
     def fetch_user(self, name):
-        url = '%suser?name=%s&hot=1&top=1' % (self.root_url, name)
-        try:
-            tree = ET.parse(urllib.request.urlopen(url))
-        except ETParseError:
-            log.critical('unable to retrieve BGG user %s' % name)
-            return None
-
+        url = '%suser?name=%s&hot=1&top=1' % (self.root_url, urllib.parse.quote(name))
+        tree = self._fetch_tree(url)
         root = tree.getroot()
 
         kwargs = dict()
@@ -187,13 +207,8 @@ class BGGAPI(object):
         return User(**kwargs)
 
     def fetch_collection(self, user):
-        url = '%scollection?username=%s&stats=1' % (self.root_url, user)
-        try:
-            tree = ET.parse(urllib.request.urlopen(url))
-        except ETParseError:
-            log.critical('unable to retrieve BGG collection for user %s' % user)
-            return None
-
+        url = '%scollection?username=%s&stats=1' % (self.root_url, urllib.parse.quote(user))
+        tree = self._fetch_tree(url)
         root = tree.getroot()
         collection = Collection(user)
 
