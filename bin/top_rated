@@ -7,6 +7,7 @@ import argparse
 import logging
 
 from libBGG.BGGAPI import BGGAPI
+from libBGG.BGGCache import BGGCache
 from libBGG.Boardgame import Boardgame
 from libBGG.User import User
 from libBGG.Collection import Collection
@@ -21,6 +22,12 @@ if __name__ == "__main__":
                     help='ID of guild. (bgg does not support guild by name search.')
     ap.add_argument('-n', '--number', dest='number', default=100, type=int,
                     help='How many games to show. (Default=100)')
+    ap.add_argument('-C', '--cache', dest='cache', help='Path to cache. If given look in '
+                    'cache first, then fetch from BGG. Otherwise always fetch from BGG.'
+                    ' collection. If --forcefetch is given, force a fetch into the cache.')
+    ap.add_argument('-f', '--forcefetch', dest='forcefetch', help='If given, force a refetch '
+                    'of any data. This argument does nothing if a cache is not given.',
+                    action='store_true')
     ap.add_argument("-l", "--loglevel", dest="loglevel",
                     help="The level at which to log. Must be one of "
                     "none, debug, info, warning, error, or critical. Default is none. ("
@@ -56,9 +63,12 @@ if __name__ == "__main__":
                         level=logLevels[args.loglevel])
 
     # now do some real work.
-    api = BGGAPI()
+    if args.cache is not None:
+        api = BGGAPI(BGGCache(args.cache))
+    else:
+        api = BGGAPI()
 
-    guild = api.fetch_guild(args.guild)
+    guild = api.fetch_guild(args.guild, forcefetch=args.forcefetch)
     if guild is None:
         print('Error fetching guild info.')
         exit(2)
@@ -71,7 +81,7 @@ if __name__ == "__main__":
     game_num = 0
     rating_num = 0
     for member in guild.members:
-        collections[member] = api.fetch_collection(member)
+        collections[member] = api.fetch_collection(member, forcefetch=args.forcefetch)
         if collections[member] is not None:
             print('.', end='')
             stdout.flush()
@@ -90,6 +100,13 @@ if __name__ == "__main__":
             if rating.userrating is not None:
                 rating_map[rating.name].append(rating.userrating)
 
+    # filter out games that have not been rated by at least %5 of the guild
+    min_rating = int(len(guild.members)/5.0)
+    rating_map = {k: v for k, v in rating_map.items() if len(rating_map[k]) > min_rating}
+
+    # filter out expansions, promos, etc. 
+    # TDB 
+
     stats = defaultdict(lambda: defaultdict(float))
     for name, data in rating_map.items():
         a = numpy.array(data, dtype='float64')   # convert to float
@@ -99,6 +116,7 @@ if __name__ == "__main__":
         stats[name]['n'] = a.size
     
     print()
+
     # top is list of game names sorted by mean.
     top = sorted(stats, key=lambda x: stats[x]['mean'], reverse=True)
 

@@ -34,12 +34,10 @@ class BGGAPI(object):
         guild = api.fetch('1920')  # BGG only supports fetch by ID.
         print 'BGG Guild %s has %d members.' % (guild.name, len(guild.members))
     '''
-    def __init__(self):
+    def __init__(self, cache=None):
         self.root_url = 'http://www.boardgamegeek.com/xmlapi2/'
+        self.cache = cache
 
-    def _get_thing_by_id(self, bgg_id):
-        url = '%sthing?id=%s' % (self.root_url, bgg_id)
-        return self._fetch_tree(url)
 
     def _fetch_tree(self, url):
         try:
@@ -50,17 +48,24 @@ class BGGAPI(object):
                 log.warn('We failed to reach a server. Reason: %s' % e.reason)
             elif hasattr(e, 'code'):
                 log.warn('The server couldn\'t fulfill the request. Error code: %d', e.code)
-            raise BGGAPIException(e)
-        except ETParseError:
-            log.critical('unable to parse BGG response %s' % name)
-            raise BGGAPIException(e)
+            # raise BGGAPIException(e)
+            return None
+        except ETParseError as e:
+            log.critical('unable to parse BGG response to %s' % url)
+            # raise BGGAPIException(e)
+            return None
 
         return tree
 
-    def fetch_boardgame(self, name, bgid=None):
+    def fetch_boardgame(self, name, bgid=None, forcefetch=False):
         '''Fetch information about a bardgame from BGG by name. If bgid is given,
-        it will be used instead. bgid is the ID of the game at BGG. bgid should be type str.'''
+        it will be used instead. bgid is the ID of the game at BGG. bgid should be type str.
+
+        BGGAPI always caches the first fetch of a game if given a cachedir. If forcefetch == True, 
+        fetch_boardgame will fetch or re-fetch from BGG.'''
         if bgid is None:
+            # ideally we'd search the cache by name, but that would be
+            # difficult. So we just fetch it via BGG.
             log.info('fetching boardgame by name "%s"' % name)
             url = '%ssearch?query=%s&exact=1' % (self.root_url,
                                                  urllib.parse.quote(name))
@@ -76,7 +81,20 @@ class BGGAPI(object):
                 return None
 
         log.info('fetching boardgame by BGG ID "%s"' % bgid)
-        tree = self._get_thing_by_id(bgid)
+        url = '%sthing?id=%s' % (self.root_url, bgid)
+        if forcefetch == True or self.cache is None:
+            tree = self._fetch_tree(url)
+        else:
+            tree = self.cache.get_bg(bgid)
+            if tree is None:  # cache miss
+                tree = self._fetch_tree(url)
+
+        if self.cache is not None:
+            self.cache.cache_bg(tree, bgid)
+
+        if tree is None:
+            return None
+
         root = tree.getroot()
 
         kwargs = dict()
@@ -126,11 +144,23 @@ class BGGAPI(object):
         log.debug('creating boardgame with kwargs: %s' % kwargs)
         return Boardgame(**kwargs)
 
-    def fetch_guild(self, gid):
+    def fetch_guild(self, gid, forcefetch=False):
         '''Fetch Guild information from BGG and populate a returned Guild object. There is
-        currently no way to query BGG by guild name, it must be by ID.'''
+        currently no way to query BGG by guild name, it must be by ID.
+
+        BGGAPI always caches the first fetch of a game if given a cachedir. If forcefetch == True, 
+        fetch_boardgame will overwrite the existing cache if it exists.'''
         url = '%sguild?id=%s&members=1' % (self.root_url, gid)
-        tree = self._fetch_tree(url)
+        if forcefetch == True or self.cache is None:
+            tree = self._fetch_tree(url)
+        else:
+            tree = self.cache.get_guild(gid)
+            if tree is None:  # cache miss
+                tree = self._fetch_tree(url)
+
+        if self.cache is not None:
+            self.cache.cache_guild(tree, gid)
+
         root = tree.getroot()
 
         if 'name' not in root.attrib:
@@ -139,17 +169,26 @@ class BGGAPI(object):
 
         kwargs = dict()
         kwargs['name'] = root.attrib['name']
-        kwargs['bggid'] = gid
+        kwargs['gid'] = gid
         kwargs['members'] = list()
 
         el = root.find('.//members[@count]')
         count = int(el.attrib['count'])
-        total_pages = int(1+(count/25))   # 25 memebers per page according to BGGAPI
+        total_pages = int(2+(count/25))   # 25 memebers per page according to BGGAPI
         if total_pages >= 10:
-            log.warn('Need to fetch %d pages. It could take awhile.' % total_pages)
-        for page in range(total_pages):
-            url = '%sguild?id=%s&members=1&page=%d' % (self.root_url, gid, page+1)
-            tree = self._fetch_tree(url)
+            log.warn('Need to fetch %d pages. It could take awhile.' % (total_pages-1))
+        for page in range(1,total_pages):
+            url = '%sguild?id=%s&members=1&page=%d' % (self.root_url, gid, page)
+            if forcefetch == True or self.cache is None:
+                tree = self._fetch_tree(url)
+            else:
+                tree = self.cache.get_guild(gid, page=page)
+                if tree is None:  # cache miss
+                    tree = self._fetch_tree(url)
+
+            if self.cache is not None:
+                self.cache.cache_guild(tree, gid, page=page)
+
             root = tree.getroot()
             log.debug('fetched guild page %d of %d' % (page, total_pages))
 
@@ -165,14 +204,26 @@ class BGGAPI(object):
 
         return Guild(**kwargs)
 
-    def fetch_user(self, name):
+    def fetch_user(self, name, forcefetch=False):
         url = '%suser?name=%s&hot=1&top=1' % (self.root_url, urllib.parse.quote(name))
-        tree = self._fetch_tree(url)
+        if forcefetch == True or self.cache is None:
+            tree = self._fetch_tree(url)
+        else:
+            tree = self.cache.get_user(name)
+            if tree is None:  # cache miss
+                tree = self._fetch_tree(url)
+
+        if not tree:
+            return None
+
+        if self.cache is not None:
+            self.cache.cache_user(tree, name)
+
         root = tree.getroot()
 
         kwargs = dict()
         kwargs['name'] = root.attrib['name']
-        kwargs['bggid'] = root.attrib['id']
+        kwargs['bgid'] = root.attrib['id']
 
         value_map = {
             './/firstname': 'firstname',
@@ -206,33 +257,37 @@ class BGGAPI(object):
 
         return User(**kwargs)
 
-    def fetch_collection(self, user):
-        url = '%scollection?username=%s&stats=1' % (self.root_url, urllib.parse.quote(user))
-        tree = self._fetch_tree(url)
+    def fetch_collection(self, name, forcefetch=False):
+        url = '%scollection?username=%s&stats=1' % (self.root_url, urllib.parse.quote(name))
+        if forcefetch == True or self.cache is None:
+            tree = self._fetch_tree(url)
+        else:
+            tree = self.cache.get_collection(name)
+            if tree is None:  # cache miss
+                tree = self._fetch_tree(url)
+
+        if self.cache is not None:
+            self.cache.cache_collection(tree, name)
+
         root = tree.getroot()
-        collection = Collection(user)
+        collection = Collection(name)
 
         # build up the games, status, and rating and add to collection.
         els = root.findall('.//item[@subtype="boardgame"]')
-        log.debug('Found %s games in %s\'s collection.' % (len(els), user))
+        log.debug('Found %s games in %s\'s collection.' % (len(els), name))
         for el in els:
             stats = el.find('stats')
             rating = stats.find('rating')
             status = el.find('status')
 
-            kwargs = dict()
-            bgname = el.find('name').text
-            kwargs['names'] = bgname
-            subel = el.find('yearpublished')
-            kwargs['year'] = subel.text if not subel is None else None
-            subel = el.find('image')
-            kwargs['image'] = subel.text if not subel is None else None
-            subel = el.find('thumbnail')
-            kwargs['thumbnail'] = subel.text if not subel is None else None
-
-            for attr in ['minplayers', 'maxplayers', 'playingtime']:
-                kwargs[attr] = stats.attrib[attr] if attr in stats.attrib else ''
-            collection.games.append(Boardgame(**kwargs))
+            # grab the bg from local cache if possible
+            bgid = el.attrib['objectid']
+            bg = self.fetch_boardgame(None, bgid=bgid)
+            bgname = bg.name
+            if not bg:
+                log.warn('unable to fetch bg id %s' % bgid)
+            else:
+                collection.games.append(bg)
            
             kwargs = dict()
             # this only works as BoardgameStatus.valid_properties matches most of the XML attributes
@@ -241,6 +296,7 @@ class BGGAPI(object):
                 kwargs[prop] = status.attrib[prop] if prop in status.attrib else ''
             kwargs['numplays'] = el.find('numplays').text
             kwargs['name'] = bgname
+            kwargs['bgid'] = bgid
             collection.status[bgname] = BoardgameStatus(**kwargs)
 
             kwargs = dict()
@@ -257,8 +313,8 @@ class BGGAPI(object):
 
             kwargs['BGGrank'] = rating.find('ranks/rank[@name="boardgame"]').attrib['value']
             log.debug('%s ranked %s by BGG - rated %s by %s' % (
-                bgname, kwargs['BGGrank'], kwargs['userrating'], user))
+                bgname, kwargs['BGGrank'], kwargs['userrating'], name))
             log.debug('Creating Rating with: %s' % kwargs)
-            collection.rating[bgname] = Rating(**kwargs)
+            collection.rating[bgid] = Rating(**kwargs)
 
         return collection

@@ -11,7 +11,8 @@ class CollectionException(Exception):
 
 
 class Rating(PropertiedObject):
-    valid_properties = ['name', 'userrating', 'usersrated', 'average', 'stddev', 'bayesaverage', 'BGGrank', 'median']
+    valid_properties = ['name', 'bgid', 'userrating', 'usersrated', 'average', 'stddev',
+                        'bayesaverage', 'BGGrank', 'median']
     def __init__(self, **kwargs):
         self.valid_properties = Rating.valid_properties
         super(Rating, self).__init__(**kwargs)
@@ -21,8 +22,8 @@ class Rating(PropertiedObject):
 
 
 class BoardgameStatus(PropertiedObject):
-    valid_properties = ['name', 'own', 'prevown', 'fortrade', 'want', 'wanttoplay', 'wanttobuy',
-                        'wishlist', 'wishlistpriority', 'timestamp', 'numplays']
+    valid_properties = ['name', 'bgid', 'own', 'prevown', 'fortrade', 'want', 'wanttoplay',
+                        'wanttobuy', 'wishlist', 'wishlistpriority', 'timestamp', 'numplays']
     def __init__(self, **kwargs):
         self.valid_properties = BoardgameStatus.valid_properties
         super(BoardgameStatus, self).__init__(**kwargs)
@@ -60,7 +61,11 @@ class Collection(object):
         print('%s\'s collection has %s games:' % (self.user, len(self.games)), end=' ')
         for game in self.games:
             name = game.name
-            print('%s (%s) rated: %s,' % (name, game.year, self.rating[name].userrating), end=' ')
+            if self.rating[game.bgid].userrating:
+                rating = ' rated: %s' % self.rating[game.bgid].userrating
+            else:
+                rating = ''
+            print('%s (%s)%s,' % (game.name, game.year, rating), end=' ')
 
         print()
 

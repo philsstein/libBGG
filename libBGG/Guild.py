@@ -16,7 +16,7 @@ class Guild(PropertiedObject):
     # This should really contain the correct types as well...
     # ... and be put in a common base class.
     valid_properties = [
-        'category', 'website', 'manager', 'description', 'members', 'name', 'bggid'
+        'category', 'website', 'manager', 'description', 'members', 'name', 'gid'
     ]
 
     def __init__(self, **kwargs):
@@ -34,7 +34,7 @@ class Guild(PropertiedObject):
         super(Guild, self).dump('Guild %s' % self.name)
 
     def __unicode__(self):
-        return 'Guild %s (id=%s): %s' % (self.name, self.bggid)
+        return 'Guild %s (id=%s): %s' % (self.name, self.gid)
 
     def __str__(self):
         return self.__unicode__().encode('utf-8').strip()
