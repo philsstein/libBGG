@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+
+from sys import exit, stdout
+from collections import defaultdict
+import numpy
+import argparse
+import logging
+
+from libBGG.BGGAPI import BGGAPI
+from libBGG.Boardgame import Boardgame
+from libBGG.User import User
+from libBGG.Collection import Collection
+from libBGG.Guild import Guild
+
+log = logging.getLogger(__name__)
+
+if __name__ == "__main__":
+    desc = ('Show top ratings for a given guild.')
+    ap = argparse.ArgumentParser(description=desc)
+    ap.add_argument('-g', '--guild', dest='guild',
+                    help='ID of guild. (bgg does not support guild by name search.')
+    ap.add_argument('-n', '--number', dest='number', default=100, type=int,
+                    help='How many games to show. (Default=100)')
+    ap.add_argument("-l", "--loglevel", dest="loglevel",
+                    help="The level at which to log. Must be one of "
+                    "none, debug, info, warning, error, or critical. Default is none. ("
+                    "This is mostly used for debugging.)",
+                    default='none', choices=['none', 'all', 'debug', 'info', 'warning',
+                                             'error', 'critical'])
+    args = ap.parse_args()
+
+    if args.guild is None:
+        ap.print_help()
+        print('\nYou must specify a guild ID with -g (or --guild)')
+        exit(1)
+    else:
+        try:
+            int(args.guild)
+        except TypeError:
+            ap.print_help()
+            print('\nGuild value must be a guild ID - an integer.')
+            exit(2)
+
+    logLevels = {
+        'none': 100,
+        'all': 0,
+        'debug': logging.DEBUG,
+        'info': logging.INFO,
+        'warning': logging.WARNING,
+        'error': logging.ERROR,
+        'critical': logging.CRITICAL
+    }
+    log_format = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+    log_datefmt = '%m-%d %H:%M:%S'
+    logging.basicConfig(format=log_format, datefmt=log_datefmt,
+                        level=logLevels[args.loglevel])
+
+    # now do some real work.
+    api = BGGAPI()
+
+    guild = api.fetch_guild(args.guild)
+    if guild is None:
+        print('Error fetching guild info.')
+        exit(2)
+
+    print('Fetched member information for guild "%s"' % guild.name)
+
+    collections = defaultdict(str)
+    print('Fetching %d member collections.' % len(guild.members), end='')
+    stdout.flush()
+    game_num = 0
+    rating_num = 0
+    for member in guild.members:
+        collections[member] = api.fetch_collection(member)
+        if collections[member] is not None:
+            print('.', end='')
+            stdout.flush()
+            game_num += len(collections[member].games)
+            rating_num += len(collections[member].rating)
+        else:
+            print('Error fetching collection for %s' % member)
+
+    print('Fetched %d collections totalling %d games and %d ratings.' % (
+        len(collections), game_num, rating_num))
+
+    print('Computing ratings...')
+    rating_map = defaultdict(list)
+    for member, collection in collections.items():
+        for game_name, rating in collection.rating.items():
+            if rating.userrating is not None:
+                rating_map[rating.name].append(rating.userrating)
+
+    stats = defaultdict(lambda: defaultdict(float))
+    for name, data in rating_map.items():
+        a = numpy.array(data, dtype='float64')   # convert to float
+        # print('\t%s - n:%d, avg:%f, stddev:%f' % (name, a.size, a.mean(), a.std()))
+        stats[name]['mean'] = a.mean()
+        stats[name]['stddev'] = a.std()
+        stats[name]['n'] = a.size
+    
+    print()
+    # top is list of game names sorted by mean.
+    top = sorted(stats, key=lambda x: stats[x]['mean'], reverse=True)
+
+    title = 'Ratings for guild %s:' % guild.name
+    print('%s\n%s' % (title, '=' * len(title)))
+    print('Rating\tRated\tStddev\tName\n------\t-----\t------\t----')
+    for name in top[:args.number]:
+        print('%2.3f\t%d\t%2.3f\t%s' % (stats[name]['mean'], stats[name]['n'],
+                                        stats[name]['stddev'], name))
