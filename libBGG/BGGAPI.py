@@ -292,14 +292,21 @@ class BGGAPI(object):
             rating = stats.find('rating')
             status = el.find('status')
 
-            # grab the bg from local cache if possible
+            kwargs = dict()
+            bgname = el.find('name').text
+            kwargs['names'] = bgname
             bgid = el.attrib['objectid']
-            bg = self.fetch_boardgame(None, bgid=bgid)
-            bgname = bg.name
-            if not bg:
-                log.warn('unable to fetch bg id %s' % bgid)
-            else:
-                collection.games.append(bg)
+            kwargs['bgid'] = bgid
+            subel = el.find('yearpublished')
+            kwargs['year'] = subel.text if not subel is None else None
+            subel = el.find('image')
+            kwargs['image'] = subel.text if not subel is None else None
+            subel = el.find('thumbnail')
+            kwargs['thumbnail'] = subel.text if not subel is None else None
+
+            for attr in ['minplayers', 'maxplayers', 'playingtime']:
+                kwargs[attr] = stats.attrib[attr] if attr in stats.attrib else ''
+            collection.games.append(Boardgame(**kwargs))
            
             kwargs = dict()
             # this only works as BoardgameStatus.valid_properties matches most of the XML attributes

@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 rating_map[rating.name].append(rating.userrating)
 
     # filter out games that have not been rated by at least %5 of the guild
-    min_rating = int(len(guild.members)/5.0)
+    min_rating = int(len(guild.members) * 0.05)
     rating_map = {k: v for k, v in rating_map.items() if len(rating_map[k]) > min_rating}
 
     # filter out expansions, promos, etc. 

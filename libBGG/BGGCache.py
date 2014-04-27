@@ -3,6 +3,7 @@ import os.path
 import logging
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError as ETParseError
+from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
@@ -20,18 +21,24 @@ class BGGCache(object):
         self.userdir = os.path.join(self.cachedir, 'users')
         self.guilddir = os.path.join(self.cachedir, 'guilds')
 
+        self.cache = defaultdict(lambda : defaultdict(str))
+
         for d in [self.cachedir, self.guilddir, self.bgdir, self.collectiondir, self.userdir]:
             if not os.path.isdir(d):
                 os.mkdir(d)
 
     def cache_bg(self, tree, bgid):
+        self.cache['boardgames'][bgid] = tree
         self._cache_tree(tree, os.path.join(self.bgdir, '%s.xml' % bgid))
 
     def get_bg(self, bgid):
-        return self._get_tree(os.path.join(self.bgdir, '%s.xml' % bgid))
+        if bgid in self.cache['boardgames']:
+            return self.cache['boardgames'][bgid]
+        else:
+            return self._get_tree(os.path.join(self.bgdir, '%s.xml' % bgid))
 
     def bg_exists(self, bgid):
-        return os.path.exists(os.path.join(self.bgdir, '%s.xml' % bgid))
+        return bgid in self.cache['boardgames'] or os.path.exists(os.path.join(self.bgdir, '%s.xml' % bgid))
 
     def cache_guild(self, tree, gid, page=1):
         self._cache_tree(tree, os.path.join(self.guilddir, '%s-%d.xml' % (gid, page)))
