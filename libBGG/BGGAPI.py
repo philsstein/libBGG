@@ -38,7 +38,6 @@ class BGGAPI(object):
         self.root_url = 'http://www.boardgamegeek.com/xmlapi2/'
         self.cache = cache
 
-
     def _fetch_tree(self, url):
         try:
             tree = ET.parse(urllib.request.urlopen(url))
@@ -89,11 +88,11 @@ class BGGAPI(object):
             if tree is None:  # cache miss
                 tree = self._fetch_tree(url)
 
-        if self.cache is not None:
-            self.cache.cache_bg(tree, bgid)
-
         if tree is None:
             return None
+
+        if self.cache is not None:
+            self.cache.cache_bg(tree, bgid)
 
         root = tree.getroot()
 
@@ -158,6 +157,10 @@ class BGGAPI(object):
             if tree is None:  # cache miss
                 tree = self._fetch_tree(url)
 
+        if tree is None:
+            log.warn('Could not get XML for %s' % url)
+            return None
+
         if self.cache is not None:
             self.cache.cache_guild(tree, gid)
 
@@ -186,6 +189,10 @@ class BGGAPI(object):
                 if tree is None:  # cache miss
                     tree = self._fetch_tree(url)
 
+            if tree is None:
+                log.warn('Could not get XML for %s' % url)
+                return None
+
             if self.cache is not None:
                 self.cache.cache_guild(tree, gid, page=page)
 
@@ -213,7 +220,8 @@ class BGGAPI(object):
             if tree is None:  # cache miss
                 tree = self._fetch_tree(url)
 
-        if not tree:
+        if tree is None:
+            log.warn('Could not get XML for %s' % url)
             return None
 
         if self.cache is not None:
@@ -265,6 +273,10 @@ class BGGAPI(object):
             tree = self.cache.get_collection(name)
             if tree is None:  # cache miss
                 tree = self._fetch_tree(url)
+
+        if tree is None:
+            log.warn('Could not get XML for %s' % url)
+            return None
 
         if self.cache is not None:
             self.cache.cache_collection(tree, name)
