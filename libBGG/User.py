@@ -18,7 +18,7 @@ class User(PropertiedObject):
     # This should really contain the correct types as well...
     valid_properties = [
         'name', 'hot10', 'top10', 'firstname', 'lastname', 'yearregistered', 'lastlogin',
-        'stateorprovince', 'country', 'traderating', 'bggid'
+        'stateorprovince', 'country', 'traderating', 'bgid'
     ]
 
     def __init__(self, **kwargs):
