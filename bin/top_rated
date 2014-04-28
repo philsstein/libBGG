@@ -159,17 +159,18 @@ if __name__ == "__main__":
                 fd.write('</tr>\n')
                 i = i + 1
             fd.write('</tbody></table>\n')
-            fd.write('Computed at: %s ' % datetime.ctime(datetime.now()))
+            fd.write('Computed at: %s ' % datetime.now().isoformat())
             fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
 
     if args.wikiout:
         with open(args.wikiout, 'w') as fd:
             i = 1
-            fd.write('||Game|Rating|+/-|\n|--:|:-----------|---------------:|:--|\n')
+            fd.write('|Rank|Game|Rating|+/-|Raters\n|--:|:-----------|---------------:|--:|-----:|\n')
             for name in top[:args.number]:
-                fd.write('|%d|[%s](http://boardgamegeek.com/boardgame/%s)|%s|%s\n' % (i, name, bgid_map[name], stats[name]['mean'], ' '))
+                fd.write('|%d|[%s](http://boardgamegeek.com/boardgame/%s)|%4.2f|%s|%d\n' % (
+                    i, name, bgid_map[name], stats[name]['mean'], ' ', stats[name]['n']))
                 i = i + 1
-            fd.write('Computed at: %s ' % datetime.ctime(datetime.now()))
+            fd.write('Computed at: %s ' % datetime.now().isoformat())
             fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
 
     exit(0)
