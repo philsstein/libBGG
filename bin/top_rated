@@ -15,6 +15,7 @@ from libBGG.Guild import Guild
 
 log = logging.getLogger(__name__)
 
+
 if __name__ == "__main__":
     desc = ('Show top ratings for a given guild.')
     ap = argparse.ArgumentParser(description=desc)
@@ -98,19 +99,25 @@ if __name__ == "__main__":
     for member, collection in collections.items():
         for game_name, rating in collection.rating.items():
             if rating.userrating is not None:
-                rating_map[rating.name].append(rating.userrating)
+                bg = api.fetch_boardgame(name=None, bgid=rating.bgid)
+                if not bg:
+                    log.info('Ignoring game %s. It has no bgid')
+                    continue
+                if getattr(bg, 'categories'):
+                    if not 'Expansion for Base-game' in bg.categories:
+                        rating_map[rating.name].append(rating.userrating)
+                    else:
+                        log.info('excluding expansion %s (id:%s)' % (rating.name, rating.bgid))
+                else:
+                    log.info('Ignoring %s - it has no categories' % bg.name)
 
     # filter out games that have not been rated by at least %5 of the guild
     min_rating = int(len(guild.members) * 0.05)
     rating_map = {k: v for k, v in rating_map.items() if len(rating_map[k]) > min_rating}
 
-    # filter out expansions, promos, etc. 
-    # TDB 
-
     stats = defaultdict(lambda: defaultdict(float))
     for name, data in rating_map.items():
         a = numpy.array(data, dtype='float64')   # convert to float
-        # print('\t%s - n:%d, avg:%f, stddev:%f' % (name, a.size, a.mean(), a.std()))
         stats[name]['mean'] = a.mean()
         stats[name]['stddev'] = a.std()
         stats[name]['n'] = a.size
@@ -126,3 +133,4 @@ if __name__ == "__main__":
     for name in top[:args.number]:
         print('%2.3f\t%d\t%2.3f\t%s' % (stats[name]['mean'], stats[name]['n'],
                                         stats[name]['stddev'], name))
+

@@ -65,7 +65,7 @@ class BGGAPI(object):
         if bgid is None:
             # ideally we'd search the cache by name, but that would be
             # difficult. So we just fetch it via BGG.
-            log.info('fetching boardgame by name "%s"' % name)
+            log.debug('fetching boardgame by name "%s"' % name)
             url = '%ssearch?query=%s&exact=1' % (self.root_url,
                                                  urllib.parse.quote(name))
             tree = self._fetch_tree(url)
@@ -79,7 +79,7 @@ class BGGAPI(object):
                 log.warning('BGGAPI gave us a game without an id: %s' % name)
                 return None
 
-        log.info('fetching boardgame by BGG ID "%s"' % bgid)
+        log.debug('fetching boardgame by BGG ID "%s"' % bgid)
         url = '%sthing?id=%s' % (self.root_url, bgid)
         if forcefetch == True or self.cache is None:
             tree = self._fetch_tree(url)
@@ -320,6 +320,7 @@ class BGGAPI(object):
 
             kwargs = dict()
             kwargs['name'] = bgname
+            kwargs['bgid'] = bgid
             if 'value' in rating.attrib and rating.attrib['value'] != 'N/A':
                 kwargs['userrating'] = rating.attrib['value']
             else:
