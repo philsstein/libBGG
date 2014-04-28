@@ -104,5 +104,6 @@ YINSH:
 
 Version history
 ---------------
+0.1.2 - bin/top_rated works. added local filesystem caching.
 0.1.1 - data caching added
 0.1.0 - inital checkin

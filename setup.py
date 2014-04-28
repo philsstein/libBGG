@@ -13,5 +13,5 @@ setup(
     long_description=open('README.md').read(),
     url='https://github.com/philsstein/libBGG',
     install_requires=[],
-    scripts=['./bin/bgg_query']
+    scripts=['bin/bgg_query', 'bin/top_rated']
 )
