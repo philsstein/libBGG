@@ -2,6 +2,7 @@
 
 from sys import exit, stdout
 from collections import defaultdict
+from datetime import datetime
 import numpy
 import argparse
 import logging
@@ -29,6 +30,10 @@ if __name__ == "__main__":
     ap.add_argument('-f', '--forcefetch', dest='forcefetch', help='If given, force a refetch '
                     'of any data. This argument does nothing if a cache is not given.',
                     action='store_true')
+    ap.add_argument('-H', '--htmlout', dest='htmlout', help='If given, write an HTML table of '
+                    ' the data to the given file.')
+    ap.add_argument('-w', '--wikiout', dest='wikiout', help='If given, write a wiki formatted '
+                    ' version of the data to the given file.')
     ap.add_argument("-l", "--loglevel", dest="loglevel",
                     help="The level at which to log. Must be one of "
                     "none, debug, info, warning, error, or critical. Default is none. ("
@@ -96,6 +101,7 @@ if __name__ == "__main__":
 
     print('Computing ratings...')
     rating_map = defaultdict(list)
+    bgid_map = defaultdict(list)
     for member, collection in collections.items():
         for game_name, rating in collection.rating.items():
             if rating.userrating is not None:
@@ -106,6 +112,7 @@ if __name__ == "__main__":
                 if getattr(bg, 'categories'):
                     if not 'Expansion for Base-game' in bg.categories:
                         rating_map[rating.name].append(rating.userrating)
+                        bgid_map[rating.name] = rating.bgid
                     else:
                         log.info('excluding expansion %s (id:%s)' % (rating.name, rating.bgid))
                 else:
@@ -129,8 +136,40 @@ if __name__ == "__main__":
 
     title = 'Ratings for guild %s:' % guild.name
     print('%s\n%s' % (title, '=' * len(title)))
-    print('Rating\tRated\tStddev\tName\n------\t-----\t------\t----')
+    print('Rank Rating Rated Stddev Name\n---- ------ ----- ------ ----')
+    i = 1
     for name in top[:args.number]:
-        print('%2.3f\t%d\t%2.3f\t%s' % (stats[name]['mean'], stats[name]['n'],
-                                        stats[name]['stddev'], name))
+        print('%3d. %6.2f %5d %6.2f %s' % (
+            i, stats[name]['mean'], stats[name]['n'], stats[name]['stddev'], name))
+        i = i + 1
 
+    print('Computed at: %s' % datetime.ctime(datetime.now()))
+    print('Using %d ratings from %d guild members.' % (rating_num, len(guild.members)))
+
+    if args.htmlout:
+        with open(args.htmlout, 'w') as fd:
+            i = 1
+            fd.write('<table><thead>\n<tr>\n<th align="right"></th>\n<th align="left">Game</th>\n<th align="right">Rating</th>\n<th align="left"></th>\n</tr>\n</thead><tbody>\n')
+            for name in top[:args.number]:
+                fd.write('<tr>\n')
+                fd.write('<td align="right">%d</td>\n' % i)
+                fd.write('<td align="left"><a href="http://boardgamegeek.com/boardgame/%s">%s</a></td>\n' % (bgid_map[name], stats[name]))
+                fd.write('<td align="right">%6.2s</td>\n' % stats[name]['mean'])
+                fd.write('<td align="left"><strong>▲X</strong></td>\n')
+                fd.write('</tr>\n')
+                i = i + 1
+            fd.write('</tbody></table>\n')
+            fd.write('Computed at: %s ' % datetime.ctime(datetime.now()))
+            fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
+
+    if args.wikiout:
+        with open(args.wikiout, 'w') as fd:
+            i = 1
+            fd.write('||Game|Rating|+/-|\n|--:|:-----------|---------------:|:--|\n')
+            for name in top[:args.number]:
+                fd.write('|%d|[%s](http://boardgamegeek.com/boardgame/%s)|%s|%s\n' % (i, name, bgid_map[name], stats[name]['mean'], ' '))
+                i = i + 1
+            fd.write('Computed at: %s ' % datetime.ctime(datetime.now()))
+            fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
+
+    exit(0)
