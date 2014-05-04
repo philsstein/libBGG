@@ -125,6 +125,11 @@ if __name__ == "__main__":
     min_rating = int(len(guild.members) * 0.05)
     rating_map = {k: v for k, v in rating_map.items() if len(rating_map[k]) > min_rating}
 
+    # games to ignore for some reason, by bgg id.
+    # 40834 --> Dominion Intrgue (really just Dominion)
+    ignored_games = ['40834']
+    rating_map = {k: v for k, v in rating_map.items() if not bgid_map[k] in ignored_games}
+
     stats = defaultdict(lambda: defaultdict(float))
     for name, data in rating_map.items():
         a = numpy.array(data, dtype='float64')   # convert to float
