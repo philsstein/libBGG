@@ -143,8 +143,8 @@ if __name__ == "__main__":
             i, stats[name]['mean'], stats[name]['n'], stats[name]['stddev'], name))
         i = i + 1
 
-    print('Computed at: %s' % datetime.ctime(datetime.now()))
-    print('Using %d ratings from %d guild members.' % (rating_num, len(guild.members)))
+    #print('Computed at: %s' % datetime.ctime(datetime.now()))
+    #print('Using %d ratings from %d guild members.' % (rating_num, len(guild.members)))
 
     if args.htmlout:
         with open(args.htmlout, 'w') as fd:
