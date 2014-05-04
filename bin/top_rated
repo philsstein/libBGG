@@ -103,6 +103,9 @@ if __name__ == "__main__":
     rating_map = defaultdict(list)
     bgid_map = defaultdict(list)
     for member, collection in collections.items():
+        if not collection:
+            log.warn('Error getting collection for %s. Ignoring the collection!' % member)
+            continue
         for game_name, rating in collection.rating.items():
             if rating.userrating is not None:
                 bg = api.fetch_boardgame(name=None, bgid=rating.bgid)
