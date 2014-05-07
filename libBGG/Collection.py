@@ -10,26 +10,34 @@ class CollectionException(Exception):
     pass
 
 
-class Rating(PropertiedObject):
-    valid_properties = ['name', 'bgid', 'userrating', 'usersrated', 'average', 'stddev',
-                        'bayesaverage', 'BGGrank', 'median']
+class Rating(object):
+    __slots__ = ['name', 'bgid', 'userrating', 'usersrated', 'average', 'stddev',
+                 'bayesaverage', 'BGGrank', 'median']
+
     def __init__(self, **kwargs):
-        self.valid_properties = Rating.valid_properties
-        super(Rating, self).__init__(**kwargs)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def dump(self):
-        super(Rating, self).dump('%s rating' % self.name)
+        log.debug('%s rating' % self.name)
+        for a in Rating.__slots__:
+            log.debug('\t%s: %s' % (a, getattr(self, a)))
 
 
 class BoardgameStatus(PropertiedObject):
-    valid_properties = ['name', 'bgid', 'own', 'prevown', 'fortrade', 'want', 'wanttoplay',
-                        'wanttobuy', 'wishlist', 'wishlistpriority', 'timestamp', 'numplays']
+    __slots__ = ['name', 'bgid', 'own', 'prevown', 'fortrade', 'want', 'wanttoplay',
+                 'wanttobuy', 'wishlist', 'wishlistpriority', 'timestamp', 'numplays']
+
     def __init__(self, **kwargs):
-        self.valid_properties = BoardgameStatus.valid_properties
-        super(BoardgameStatus, self).__init__(**kwargs)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def dump(self):
-        super(Rating, self).dump('%s rating' % self.name)
+        log.debug('%s rating' % self.name)
+        for a in BoardgameStatus.__slots__:
+            if getattr(self, a, None):
+                log.debug('\t%s: %s' % (a, getattr(self, a)))
+
 
 
 class Collection(object):
@@ -58,17 +66,14 @@ class Collection(object):
 
     def dump(self):
         # note the , at the end of the print statements (no new lines)
-        print('%s\'s collection has %s games:' % (self.user, len(self.games)), end=' ')
+        log.debug('%s\'s collection has %s games:' % (self.user, len(self.games)))
         for game in self.games:
             name = game.name
             if self.rating[game.bgid].userrating:
                 rating = ' rated: %s' % self.rating[game.bgid].userrating
             else:
                 rating = ''
-            print('%s (%s)%s,' % (game.name, game.year, rating), end=' ')
-
-        print()
-
+            log.debug('%s (%s)%s,' % (game.name, game.year, rating))
 
     @property
     def len(self):

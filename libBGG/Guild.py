@@ -15,13 +15,13 @@ class Guild(PropertiedObject):
 
     # This should really contain the correct types as well...
     # ... and be put in a common base class.
-    valid_properties = [
+    __slots__ = [
         'category', 'website', 'manager', 'description', 'members', 'name', 'gid'
     ]
 
     def __init__(self, **kwargs):
-        self.valid_properties = Guild.valid_properties
-        super(Guild, self).__init__(**kwargs)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
         # force self.members to be a list.
         try:
@@ -31,7 +31,9 @@ class Guild(PropertiedObject):
             pass
 
     def dump(self):
-        super(Guild, self).dump('Guild %s' % self.name)
+        log.debug('Guild %s:' % self.name)
+        for a in Rating.__slots__:
+            log.debug('\t%s: %s' % (a, getattr(self, a)))
 
     def __unicode__(self):
         return 'Guild %s (id=%s): %s' % (self.name, self.gid)

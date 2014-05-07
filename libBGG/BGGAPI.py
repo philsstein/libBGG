@@ -309,9 +309,9 @@ class BGGAPI(object):
             collection.games.append(Boardgame(**kwargs))
            
             kwargs = dict()
-            # this only works as BoardgameStatus.valid_properties matches most of the XML attributes
+            # this only works as BoardgameStatus.__slots__ matches most of the XML attributes
             # exactly. i.e. this is probably bad idea.
-            for prop in BoardgameStatus.valid_properties:
+            for prop in BoardgameStatus.__slots__:
                 kwargs[prop] = status.attrib[prop] if prop in status.attrib else ''
             kwargs['numplays'] = el.find('numplays').text
             kwargs['name'] = bgname
@@ -326,7 +326,7 @@ class BGGAPI(object):
             else:
                 kwargs['userrating'] = None
 
-            for prop in Rating.valid_properties:
+            for prop in Rating.__slots__:
                 rate_el = rating.find(prop)
                 if not rate_el is None:
                     kwargs[prop] = rate_el.attrib['value'] if 'value' in rate_el.attrib else ''

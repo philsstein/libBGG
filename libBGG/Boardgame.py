@@ -16,7 +16,7 @@ class Boardgame(PropertiedObject):
     be given as a single item or as a list.'''
 
     # This should really contain the correct types as well...
-    valid_properties = [
+    __slots__ = [
         'designers', 'artists', 'playingtime', 'thumbnail',
         'image', 'description', 'minplayers', 'maxplayers',
         'categories', 'mechanics', 'families', 'publishers',
@@ -24,30 +24,40 @@ class Boardgame(PropertiedObject):
     ]
 
     def __init__(self, **kwargs):
-        self.valid_properties = Boardgame.valid_properties
-        super(Boardgame, self).__init__(**kwargs)
-        # force lists to be lists
-        for l in ['designers', 'artists', 'categories', 'mechanics', 'families', 'publishers',
-                  'names']:
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+       
+        self._list_slots = ['designers', 'artists', 'categories', 'mechanics', 'families',
+                            'publishers', 'names']
+        # force these to be lists.
+        for l in self._list_slots:
             try:
                 if type(getattr(self, l)) != list:
                     setattr(self, l, [getattr(self, l)])
             except AttributeError:
                 pass
 
+    def dump(self):
+        log.debug('%s:' % self.name)
+        for a in Boardgame.__slots__:
+            if getattr(self, a, None):
+                if a in self._list_slots:
+                    log.debug('\t%s: %s' % (a, ', '.join(getattr(self, a))))
+                else:
+                    log.debug('\t%s: %s' % (a, getattr(self, a)))
+
     def __unicode__(self):
-        return '%s (%s) by %s' % (self.name, self._year, ', '.join(self._designers))
+        return '%s (%s) by %s' % (self.name, self.year, ', '.join(self.designers))
 
     def __str__(self):
         return self.__unicode__().encode('utf-8').strip()
 
-    def dump(self):
-        super(Boardgame, self).dump('%s' % self.name)
-
     # Litte syntactic sugar for the more usual case of a single name.
     @property
     def name(self):
-        return self.names[0]
+        if getattr(self, 'names', None):
+            return self.names[0]
+        return None
 
     @name.setter
     def name(self, value):

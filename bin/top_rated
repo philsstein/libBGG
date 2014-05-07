@@ -84,51 +84,45 @@ if __name__ == "__main__":
     collections = defaultdict(str)
     print('Fetching %d member collections.' % len(guild.members), end='')
     stdout.flush()
-    game_num = 0
-    rating_num = 0
-    for member in guild.members:
-        collections[member] = api.fetch_collection(member, forcefetch=args.forcefetch)
-        if collections[member] is not None:
-            print('.', end='')
-            stdout.flush()
-            game_num += len(collections[member].games)
-            rating_num += len(collections[member].rating)
-        else:
-            print('Error fetching collection for %s' % member)
-
-    print('Fetched %d collections totalling %d games and %d ratings.' % (
-        len(collections), game_num, rating_num))
-
-    print('Computing ratings...')
     rating_map = defaultdict(list)
     bgid_map = defaultdict(list)
-    for member, collection in collections.items():
-        if not collection:
-            log.warn('Error getting collection for %s. Ignoring the collection!' % member)
+    # games to ignore for some reason, by bgg id.
+    # 40834 --> Dominion Intrgue (really just Dominion)
+    ignored_games = ['40834']
+
+    cnt = 0
+    for member in guild.members:
+        collection = api.fetch_collection(member, forcefetch=args.forcefetch)
+        if collection is None:
+            print('Error fetching collection for %s' % member)
             continue
+
+        cnt += 1
+        if cnt % 10 == 0:
+            print('%5.2f%% (%d/%d)' % ((cnt/len(guild.members)*100), cnt, len(guild.members)))
+            stdout.flush()
+
         for game_name, rating in collection.rating.items():
             if rating.userrating is not None:
                 bg = api.fetch_boardgame(name=None, bgid=rating.bgid)
                 if not bg:
-                    log.info('Ignoring game %s. It has no bgid')
+                    log.warn('Ignoring game %s. It has no bgid')
                     continue
-                if getattr(bg, 'categories'):
+                if rating.bgid in ignored_games:
+                    # log.info('Ignoring ignorable game: %s' % rating.name)
+                    continue
+                if getattr(bg, 'categories', None):
                     if not 'Expansion for Base-game' in bg.categories:
                         rating_map[rating.name].append(rating.userrating)
                         bgid_map[rating.name] = rating.bgid
                     else:
-                        log.info('excluding expansion %s (id:%s)' % (rating.name, rating.bgid))
+                        log.debug('excluding expansion %s (id:%s)' % (rating.name, rating.bgid))
                 else:
-                    log.info('Ignoring %s - it has no categories' % bg.name)
+                    log.debug('Ignoring %s - it has no categories' % bg.name)
 
     # filter out games that have not been rated by at least %5 of the guild
     min_rating = int(len(guild.members) * 0.05)
     rating_map = {k: v for k, v in rating_map.items() if len(rating_map[k]) > min_rating}
-
-    # games to ignore for some reason, by bgg id.
-    # 40834 --> Dominion Intrgue (really just Dominion)
-    ignored_games = ['40834']
-    rating_map = {k: v for k, v in rating_map.items() if not bgid_map[k] in ignored_games}
 
     stats = defaultdict(lambda: defaultdict(float))
     for name, data in rating_map.items():
@@ -151,9 +145,6 @@ if __name__ == "__main__":
             i, stats[name]['mean'], stats[name]['n'], stats[name]['stddev'], name.encode('utf-8')))
         i = i + 1
 
-    #print('Computed at: %s' % datetime.ctime(datetime.now()))
-    #print('Using %d ratings from %d guild members.' % (rating_num, len(guild.members)))
-
     if args.htmlout:
         with open(args.htmlout, 'w', encoding='utf-8') as fd:
             i = 1
@@ -169,7 +160,6 @@ if __name__ == "__main__":
                 i = i + 1
             fd.write('</tbody></table>\n')
             fd.write('Computed at: %s ' % datetime.now().isoformat())
-            fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
 
     if args.wikiout:
         with open(args.wikiout, 'w', encoding='utf-8') as fd:
@@ -180,6 +170,5 @@ if __name__ == "__main__":
                     i, name, bgid_map[name], stats[name]['mean'], ' ', stats[name]['n']))
                 i = i + 1
             fd.write('Computed at: %s ' % datetime.now().isoformat())
-            fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
 
     exit(0)
