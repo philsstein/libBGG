@@ -1,6 +1,5 @@
 import logging
 
-from libBGG.PropertiedObject import PropertiedObject
 
 log = logging.getLogger(__name__)
 
@@ -10,7 +9,7 @@ class UserException(Exception):
     pass
 
 
-class User(PropertiedObject):
+class User(object):
     '''Store information about a BGG User. The init function takes a list of valid
     proprties defined by boardgame.__slots__. Properties that are lists can
     be given as a single item or as a list.'''

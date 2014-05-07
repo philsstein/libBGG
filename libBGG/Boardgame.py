@@ -1,7 +1,5 @@
 import logging
 
-from libBGG.PropertiedObject import PropertiedObject
-
 log = logging.getLogger(__name__)
 
 
@@ -10,7 +8,7 @@ class BoardgameException(Exception):
     pass
 
 
-class Boardgame(PropertiedObject):
+class Boardgame(object):
     '''Store information about a boardgame. The init function takes a list of valid
     proprties defined by boardgame.valid_properties. Properties that are lists can
     be given as a single item or as a list.'''

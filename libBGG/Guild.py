@@ -1,5 +1,4 @@
 import logging
-from libBGG.PropertiedObject import PropertiedObject
 
 log = logging.getLogger(__name__)
 
@@ -9,7 +8,7 @@ class GuildException(Exception):
     pass
 
 
-class Guild(PropertiedObject):
+class Guild(object):
     '''Store information about a BGG Guild. The init function takes a list of valid
     proprties defined by Guild.valid_properties.'''
 

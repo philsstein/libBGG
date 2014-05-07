@@ -1,7 +1,5 @@
 import logging
 
-from libBGG.PropertiedObject import PropertiedObject
-
 log = logging.getLogger(__name__)
 
 
@@ -24,7 +22,7 @@ class Rating(object):
             log.debug('\t%s: %s' % (a, getattr(self, a)))
 
 
-class BoardgameStatus(PropertiedObject):
+class BoardgameStatus(object):
     __slots__ = ['name', 'bgid', 'own', 'prevown', 'fortrade', 'want', 'wanttoplay',
                  'wanttobuy', 'wishlist', 'wishlistpriority', 'timestamp', 'numplays']
 
