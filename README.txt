@@ -190,6 +190,7 @@ Using 1062 ratings from 6 guild members.
 
 Version history
 ---------------
+0.1.3 - Reduced memory footprint. 
 0.1.2 - bin/top_rated works. added local filesystem caching.
 0.1.1 - data caching added
 0.1.0 - inital checkin

@@ -10,7 +10,7 @@ setup(
     author='Geoff Lawler',
     author_email='geoff.lawler@gmail.com',
     description='A python interface to the boardgamegeek.com API and boardgame utils.',
-    long_description=open('README.txt').read(),
+    long_description=open('README.txt', 'r', encoding='utf-8').read(),
     url='https://github.com/philsstein/libBGG',
     install_requires=[],
     scripts=['bin/bgg_query', 'bin/top_rated']
