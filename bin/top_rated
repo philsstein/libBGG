@@ -148,22 +148,23 @@ if __name__ == "__main__":
     i = 1
     for name in top[:args.number]:
         print('%3d. %6.2f %5d %6.2f %s' % (
-            i, stats[name]['mean'], stats[name]['n'], stats[name]['stddev'], name))
+            i, stats[name]['mean'], stats[name]['n'], stats[name]['stddev'], name.encode('utf-8')))
         i = i + 1
 
     #print('Computed at: %s' % datetime.ctime(datetime.now()))
     #print('Using %d ratings from %d guild members.' % (rating_num, len(guild.members)))
 
     if args.htmlout:
-        with open(args.htmlout, 'w') as fd:
+        with open(args.htmlout, 'w', encoding='utf-8') as fd:
             i = 1
             fd.write('<table><thead>\n<tr>\n<th align="right"></th>\n<th align="left">Game</th>\n<th align="right">Rating</th>\n<th align="left"></th>\n</tr>\n</thead><tbody>\n')
             for name in top[:args.number]:
                 fd.write('<tr>\n')
                 fd.write('<td align="right">%d</td>\n' % i)
-                fd.write('<td align="left"><a href="http://boardgamegeek.com/boardgame/%s">%s</a></td>\n' % (bgid_map[name], stats[name]))
+                fd.write('<td align="left"><a href="http://boardgamegeek.com/boardgame/%s">%s</a></td>\n' % (
+                    bgid_map[name], stats[name]))
                 fd.write('<td align="right">%6.2s</td>\n' % stats[name]['mean'])
-                fd.write('<td align="left"><strong>▲X</strong></td>\n')
+                fd.write('<td align="left"><strong>+/-</strong></td>\n')
                 fd.write('</tr>\n')
                 i = i + 1
             fd.write('</tbody></table>\n')
@@ -171,7 +172,7 @@ if __name__ == "__main__":
             fd.write('using %d ratings from %d guild members.\n' % (rating_num, len(guild.members)))
 
     if args.wikiout:
-        with open(args.wikiout, 'w') as fd:
+        with open(args.wikiout, 'w', encoding='utf-8') as fd:
             i = 1
             fd.write('|Rank|Game|Rating|+/-|Raters\n|--:|:-----------|---------------:|--:|-----:|\n')
             for name in top[:args.number]:
