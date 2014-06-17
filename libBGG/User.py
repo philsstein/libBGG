@@ -39,8 +39,8 @@ class User(object):
 
     def dump(self):
         log.debug('%s' % self.name)
-        for a in Rating.__slots__:
-            log.debug('\t%s: %s' % (a, getattr(self, a)))
+        for a in User.__slots__:
+            log.debug('\t%s: %s' % (a, getattr(self, a, 'Unknown')))
 
     @property
     def fullname(self):

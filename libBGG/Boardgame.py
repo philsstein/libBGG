@@ -25,10 +25,9 @@ class Boardgame(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
        
-        self._list_slots = ['designers', 'artists', 'categories', 'mechanics', 'families',
-                            'publishers', 'names']
+        _list_slots = ['designers', 'artists', 'categories', 'mechanics', 'families', 'publishers', 'names']
         # force these to be lists.
-        for l in self._list_slots:
+        for l in _list_slots:
             try:
                 if type(getattr(self, l)) != list:
                     setattr(self, l, [getattr(self, l)])
@@ -39,10 +38,10 @@ class Boardgame(object):
         log.debug('%s:' % self.name)
         for a in Boardgame.__slots__:
             if getattr(self, a, None):
-                if a in self._list_slots:
-                    log.debug('\t%s: %s' % (a, ', '.join(getattr(self, a))))
+                if type(a) is list:
+                    log.debug('\t%s: %s' % (a, ', '.join(getattr(self, a, []))))
                 else:
-                    log.debug('\t%s: %s' % (a, getattr(self, a)))
+                    log.debug('\t%s: %s' % (a, getattr(self, a, None)))
 
     def __unicode__(self):
         return '%s (%s) by %s' % (self.name, self.year, ', '.join(self.designers))

@@ -31,8 +31,8 @@ class Guild(object):
 
     def dump(self):
         log.debug('Guild %s:' % self.name)
-        for a in Rating.__slots__:
-            log.debug('\t%s: %s' % (a, getattr(self, a)))
+        for a in Guild.__slots__:
+            log.debug('\t%s: %s' % (a, getattr(self, a, None)))
 
     def __unicode__(self):
         return 'Guild %s (id=%s): %s' % (self.name, self.gid)
