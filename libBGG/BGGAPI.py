@@ -5,6 +5,7 @@ import urllib.request, urllib.error, urllib.parse
 from urllib.error import  URLError
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError as ETParseError
+from time import sleep
 
 import logging
 
@@ -267,8 +268,23 @@ class BGGAPI(object):
 
     def fetch_collection(self, name, forcefetch=False):
         url = '%scollection?username=%s&stats=1' % (self.root_url, urllib.parse.quote(name))
+
         if forcefetch == True or self.cache is None:
-            tree = self._fetch_tree(url)
+            # API update: server side cache. fetch will fail until cached, so try a few times.
+            retry = 15 
+            sleep_time = 2
+            while retry != 0:
+                tree = self._fetch_tree(url)
+                if not tree:
+                    break
+                els = tree.getroot().findall('.//item[@subtype="boardgame"]')
+                if len(els) == 0:
+                    log.debug('Found 0 boardgames. Trying again in %d seconds.' % sleep_time)
+                    retry = retry - 1
+                    sleep(sleep_time)
+                else:
+                    log.debug('Found %d boardgames. Continuing with processing.' % len(els))
+                    break
         else:
             tree = self.cache.get_collection(name)
             if tree is None:  # cache miss

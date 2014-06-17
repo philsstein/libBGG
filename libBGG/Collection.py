@@ -37,7 +37,6 @@ class BoardgameStatus(object):
                 log.debug('\t%s: %s' % (a, getattr(self, a)))
 
 
-
 class Collection(object):
     '''
     Store information about a Collection. The init function takes a list of valid
