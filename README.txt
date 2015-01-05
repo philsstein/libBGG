@@ -1,3 +1,8 @@
+
+
+NOTE: This library is now obsolete. Please use the much improved version at: http://github.com/lcosmin/boardgamegeek
+
+
 libBGG
 ======
 
